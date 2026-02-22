@@ -1,0 +1,84 @@
+version: '3.8'
+
+services:
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:${ES_VERSION}
+    container_name: ${PROJECT_NAME}-elastic
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms${ES_MEM_LIMIT} -Xmx${ES_MEM_LIMIT}"
+      # Решение проблемы с CORS (если будете стучаться в Elastic прямо из фронтенда/браузера)
+      - http.cors.enabled=true
+      - http.cors.allow-origin="*"
+    ports:
+      - "${ES_PORT}:9200"
+    volumes:
+      - es_data:/usr/share/elasticsearch/data
+    networks:
+      - graph_net
+    # !!! ВАЖНО для Elastic: отключаем своппинг памяти !!!
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    # Проверка готовности: Kibana будет ждать, пока Elastic реально запустится
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s http://localhost:9200 >/dev/null || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    restart: unless-stopped
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:${ES_VERSION}
+    container_name: ${PROJECT_NAME}-kibana
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+    ports:
+      - "${KIBANA_PORT}:5601"
+    networks:
+      - graph_net
+    depends_on:
+      elasticsearch:
+        condition: service_healthy # Ждем не просто старта контейнера, а готовности сервиса
+    restart: unless-stopped
+
+  neo4j:
+    image: neo4j:${NEO4J_VERSION}
+    container_name: ${PROJECT_NAME}-neo4j
+    environment:
+      - NEO4J_AUTH=${NEO4J_USER}/${NEO4J_PASSWORD}
+      - NEO4J_PLUGINS=${NEO4J_PLUGINS} # ["apoc", "graph-data-science"]
+      - NEO4J_dbms_security_procedures_unrestricted=apoc.*,gds.*
+      # Настройки памяти для Neo4j (важно, чтобы он не съел весь RAM ноутбука)
+      - NEO4J_server_memory_heap_initial__size=1G
+      - NEO4J_server_memory_heap_max__size=2G
+      # Разрешаем APOC импортировать файлы (полезно для загрузки данных)
+      - NEO4J_apoc_import_file_enabled=true
+      - NEO4J_apoc_export_file_enabled=true
+    ports:
+      - "${NEO4J_HTTP_PORT}:7474"
+      - "${NEO4J_BOLT_PORT}:7687"
+    volumes:
+      - neo4j_data:/data
+      - neo4j_logs:/logs
+      # Папка import, чтобы можно было подсовывать CSV файлы локально
+      - ./neo4j_import:/var/lib/neo4j/import
+    networks:
+      - graph_net
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:7474 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+volumes:
+  es_data:
+  neo4j_data:
+  neo4j_logs:
+
+networks:
+  graph_net:
+    driver: bridge
