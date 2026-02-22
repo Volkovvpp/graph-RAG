@@ -8,7 +8,7 @@ services:
       - discovery.type=single-node
       - xpack.security.enabled=false
       - "ES_JAVA_OPTS=-Xms${ES_MEM_LIMIT} -Xmx${ES_MEM_LIMIT}"
-      # Решение проблемы с CORS (если будете стучаться в Elastic прямо из фронтенда/браузера)
+      # CORS solution (if accessing Elastic directly from frontend/browser)
       - http.cors.enabled=true
       - http.cors.allow-origin="*"
     ports:
@@ -17,12 +17,12 @@ services:
       - es_data:/usr/share/elasticsearch/data
     networks:
       - graph_net
-    # !!! ВАЖНО для Elastic: отключаем своппинг памяти !!!
+    # !!! IMPORTANT for Elastic: disable memory swapping !!!
     ulimits:
       memlock:
         soft: -1
         hard: -1
-    # Проверка готовности: Kibana будет ждать, пока Elastic реально запустится
+    # Health check: Kibana will wait until Elastic is actually up
     healthcheck:
       test: ["CMD-SHELL", "curl -s http://localhost:9200 >/dev/null || exit 1"]
       interval: 30s
@@ -41,7 +41,7 @@ services:
       - graph_net
     depends_on:
       elasticsearch:
-        condition: service_healthy # Ждем не просто старта контейнера, а готовности сервиса
+        condition: service_healthy # Wait for service readiness, not just container start
     restart: unless-stopped
 
   neo4j:
@@ -51,10 +51,10 @@ services:
       - NEO4J_AUTH=${NEO4J_USER}/${NEO4J_PASSWORD}
       - NEO4J_PLUGINS=${NEO4J_PLUGINS} # ["apoc", "graph-data-science"]
       - NEO4J_dbms_security_procedures_unrestricted=apoc.*,gds.*
-      # Настройки памяти для Neo4j (важно, чтобы он не съел весь RAM ноутбука)
+      # Memory settings for Neo4j (important to prevent consuming all RAM)
       - NEO4J_server_memory_heap_initial__size=1G
       - NEO4J_server_memory_heap_max__size=2G
-      # Разрешаем APOC импортировать файлы (полезно для загрузки данных)
+      # Allow APOC recursive import (useful for data loading)
       - NEO4J_apoc_import_file_enabled=true
       - NEO4J_apoc_export_file_enabled=true
     ports:
@@ -63,7 +63,7 @@ services:
     volumes:
       - neo4j_data:/data
       - neo4j_logs:/logs
-      # Папка import, чтобы можно было подсовывать CSV файлы локально
+      # Import folder to allow loading CSV files locally
       - ./neo4j_import:/var/lib/neo4j/import
     networks:
       - graph_net
