@@ -33,23 +33,6 @@ class HuggingFaceClient:
             print(f"Failed to connect to Hugging Face API: {e}")
             raise e
 
-    @classmethod
-    async def generate(cls, prompt: str, system_prompt: str = None) -> str:
-        """Helper to generate text from the LLM."""
-        client = cls.get_client()
-        messages = []
-        if system_prompt:
-            messages.append({"role": "system", "content": system_prompt})
-
-        messages.append({"role": "user", "content": prompt})
-
-        response = await client.chat_completion(
-            messages=messages,
-            max_tokens=2048,
-            temperature=0.1
-        )
-        return response.choices[0].message.content
-
 async def get_llm_client() -> AsyncInferenceClient:
     return HuggingFaceClient.get_client()
 

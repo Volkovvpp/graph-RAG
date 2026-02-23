@@ -24,10 +24,6 @@ class Settings(BaseSettings):
     HF_MODEL_ID: str = "meta-llama/Meta-Llama-3-8B-Instruct"
     HF_INFERENCE_ENDPOINT: str | None = None
 
-    # Ingestion
-    CHUNK_SIZE: int = 512
-    CHUNK_OVERLAP: int = 32
-
     @property
     def elastic_url(self) -> str:
         protocol = "https" if self.ES_USER and self.ES_PASSWORD else "http"

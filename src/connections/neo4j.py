@@ -87,3 +87,4 @@ class Neo4jClient:
 
 async def get_neo4j_driver() -> AsyncDriver:
     return Neo4jClient.get_driver()
+
