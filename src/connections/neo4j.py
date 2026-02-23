@@ -16,6 +16,50 @@ class Neo4jClient:
         return cls._driver
 
     @classmethod
+    async def save_chunk_graph(cls, chunk_id: str, chunk_text: str, graph_data: dict, source: str = "unknown"):
+        """
+        Save a chunk and its extracted graph data into Neo4j.
+        Links Chunk -> Entity and Entity -> Entity.
+        """
+        driver = cls.get_driver()
+
+        query = """
+        // 1. Create Chunk node
+        MERGE (c:Chunk {id: $chunk_id})
+        SET c.text = $text, c.source = $source
+        
+        // 2. Process Entities
+        FOREACH (entity IN $entities |
+            MERGE (e:Entity {name: entity.name})
+            SET e.type = entity.type, e.description = entity.description
+            
+            // Link Chunk to Entity
+            MERGE (c)-[:MENTIONED]->(e)
+        )
+        
+        // 3. Process Relationships between Entities
+        FOREACH (rel IN $relationships |
+            MERGE (s:Entity {name: rel.source})
+            MERGE (t:Entity {name: rel.target})
+            MERGE (s)-[:RELATED {type: rel.relation_type}]->(t)
+        )
+        """
+
+        try:
+            async with driver.session() as session:
+                await session.run(
+                    query,
+                    chunk_id=chunk_id,
+                    text=chunk_text,
+                    source=source,
+                    entities=graph_data.get("entities", []),
+                    relationships=graph_data.get("relationships", [])
+                )
+        except Exception as e:
+            print(f"Failed to save graph data for chunk {chunk_id}: {e}")
+            raise e
+
+    @classmethod
     async def close(cls):
         if cls._driver:
             await cls._driver.close()
@@ -43,4 +87,3 @@ class Neo4jClient:
 
 async def get_neo4j_driver() -> AsyncDriver:
     return Neo4jClient.get_driver()
-
