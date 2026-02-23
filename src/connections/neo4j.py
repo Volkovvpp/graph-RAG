@@ -1,4 +1,4 @@
-from neo4j import AsyncGraphDatabase, AsyncDriver
+from neo4j import AsyncGraphDatabase, AsyncDriver, Query
 from src.core.config import settings
 
 class Neo4jClient:
@@ -23,7 +23,7 @@ class Neo4jClient:
         """
         driver = cls.get_driver()
 
-        query = """
+        query = Query("""
         // 1. Create Chunk node
         MERGE (c:Chunk {id: $chunk_id})
         SET c.text = $text, c.source = $source
@@ -43,7 +43,7 @@ class Neo4jClient:
             MERGE (t:Entity {name: rel.target})
             MERGE (s)-[:RELATED {type: rel.relation_type}]->(t)
         )
-        """
+        """)
 
         try:
             async with driver.session() as session:
