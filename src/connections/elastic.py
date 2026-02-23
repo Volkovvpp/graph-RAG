@@ -21,58 +21,6 @@ class ElasticsearchClient:
         return cls._instance
 
     @classmethod
-    async def create_index(cls):
-        """Create the knowledge base index with appropriate mapping if it doesn't exist."""
-        client = cls.get_client()
-        index_name = settings.ES_INDEX_kNOWLEDGE_BASE
-
-        if not await client.indices.exists(index=index_name):
-            # Define mapping for vector search + text search
-            mapping = {
-                "mappings": {
-                    "properties": {
-                        "text": {"type": "text"},
-                        "chunk_id": {"type": "keyword"},
-                        "metadata": {"type": "object"},
-                        "vector": {
-                            "type": "dense_vector",
-                            "dims": 384, # Assuming a small embedding model later, for now just placeholder
-                            "index": True,
-                            "similarity": "cosine"
-                        }
-                    }
-                }
-            }
-            # For now we skip vector mapping as we haven't set up embeddings
-            # and just use standard text search
-            simple_mapping = {
-                "mappings": {
-                    "properties": {
-                        "text": {"type": "text"},
-                        "chunk_id": {"type": "keyword"},
-                        "metadata": {"type": "object"}
-                    }
-                }
-            }
-            await client.indices.create(index=index_name, body=simple_mapping)
-            print(f"Created index: {index_name}")
-
-    @classmethod
-    async def index_document(cls, chunk_id: str, text: str, metadata: dict):
-        """Index a single document/chunk."""
-        client = cls.get_client()
-        index_name = settings.ES_INDEX_kNOWLEDGE_BASE
-
-        document = {
-            "chunk_id": chunk_id,
-            "text": text,
-            "metadata": metadata,
-            # "vector": ... (add embedding later)
-        }
-
-        await client.index(index=index_name, id=chunk_id, document=document)
-
-    @classmethod
     async def close(cls):
         if cls._instance:
             await cls._instance.close()
@@ -80,3 +28,5 @@ class ElasticsearchClient:
 
 async def get_es_client() -> AsyncElasticsearch:
     return ElasticsearchClient.get_client()
+
+
