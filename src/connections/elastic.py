@@ -73,6 +73,19 @@ class ElasticsearchClient:
         await client.index(index=index_name, id=chunk_id, document=document)
 
     @classmethod
+    async def delete_document(cls, chunk_id: str):
+        """Delete a single document/chunk by its ID."""
+        client = cls.get_client()
+        index_name = settings.ES_INDEX_kNOWLEDGE_BASE
+
+        try:
+            await client.delete(index=index_name, id=chunk_id)
+        except Exception as e:
+            # Log error if deletion fails, but don't re-raise
+            # as the main error is the one that triggered the rollback.
+            print(f"Failed to delete document {chunk_id} during rollback: {e}")
+
+    @classmethod
     async def close(cls):
         if cls._instance:
             await cls._instance.close()

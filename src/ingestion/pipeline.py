@@ -63,40 +63,45 @@ class IngestionPipeline:
 
     async def _process_single_chunk(self, chunk):
         """
-        Process a single chunk.
+        Process a single chunk with transactional behavior.
+        1. Extract graph data.
+        2. Save to Elasticsearch.
+        3. Save to Neo4j.
+        4. If Neo4j save fails, delete from Elasticsearch to roll back.
         """
+        chunk_id = None
         try:
-            # 3. Extract Graph Data (Entities, Relationships)
-            # Metadata might contain 'source' from loader
+            # 3. Extract Graph Data
             source = chunk.metadata.get("source", "unknown")
-
             extraction_result = await self.extractor.extract(
                 chunk_text=chunk.page_content,
                 chunk_metadata=chunk.metadata
             )
-
             chunk_id = extraction_result["chunk_id"]
             graph_data = extraction_result["graph_data"]
 
-            # 4. Save to Elasticsearch (Text + Metadata)
-            # We don't save the graph structure itself to ES, just the text and link
-            es_task = ElasticsearchClient.index_document(
+            # 4. Save to Elasticsearch first
+            await ElasticsearchClient.index_document(
                 chunk_id=chunk_id,
                 text=chunk.page_content,
                 metadata=chunk.metadata
             )
+            logger.debug(f"Indexed chunk {chunk_id} in Elasticsearch.")
 
-            # 5. Save to Neo4j (Graph Structure + Chunk Node)
-            neo4j_task = Neo4jClient.save_chunk_graph(
+            # 5. Save to Neo4j
+            await Neo4jClient.save_chunk_graph(
                 chunk_id=chunk_id,
                 chunk_text=chunk.page_content,
                 graph_data=graph_data,
                 source=source
             )
-
-            # Run saves concurrently
-            await asyncio.gather(es_task, neo4j_task)
+            logger.debug(f"Saved graph for chunk {chunk_id} in Neo4j.")
 
         except Exception as e:
-            logger.error(f"Error processing chunk: {e}")
-
+            logger.error(f"Error processing chunk {chunk_id if chunk_id else 'unknown'}: {e}. Rolling back...")
+            # If the error happened after saving to ES, roll back
+            if chunk_id:
+                logger.info(f"Rolling back Elasticsearch document for chunk {chunk_id}.")
+                await ElasticsearchClient.delete_document(chunk_id)
+            # Re-raise the exception to notify the caller (e.g., gather)
+            raise
