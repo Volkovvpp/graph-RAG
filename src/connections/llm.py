@@ -2,20 +2,14 @@ from huggingface_hub import AsyncInferenceClient
 from src.core.config import settings
 
 class HuggingFaceClient:
-    _client: AsyncInferenceClient | None = None
-
     @classmethod
     def get_client(cls) -> AsyncInferenceClient:
-        if cls._client is None:
-            # If a dedicated endpoint is provided, use it as the base URL
-            # Otherwise use the model ID for the public Serverless Inference API
-            if settings.HF_INFERENCE_ENDPOINT:
-                 # Initialize with valid endpoint URL
-                 # Note: model argument can be None if the endpoint is model-specific
-                 cls._client = AsyncInferenceClient(model=settings.HF_INFERENCE_ENDPOINT, token=settings.HF_API_TOKEN)
-            else:
-                 cls._client = AsyncInferenceClient(model=settings.HF_MODEL_ID, token=settings.HF_API_TOKEN)
-        return cls._client
+        # We recreate the client for each call or loop to avoid "Timeout context manager should be used inside a task"
+        # and other event loop mismatch issues in Streamlit/Windows environments.
+        if settings.HF_INFERENCE_ENDPOINT:
+             return AsyncInferenceClient(model=settings.HF_INFERENCE_ENDPOINT, token=settings.HF_API_TOKEN)
+        else:
+             return AsyncInferenceClient(model=settings.HF_MODEL_ID, token=settings.HF_API_TOKEN)
 
     @classmethod
     async def verify_connectivity(cls) -> bool:
@@ -46,7 +40,7 @@ class HuggingFaceClient:
         response = await client.chat_completion(
             messages=messages,
             max_tokens=2048,
-            temperature=0.1
+            temperature=0.7
         )
         return response.choices[0].message.content
 
