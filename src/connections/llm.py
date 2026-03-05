@@ -14,35 +14,35 @@ class HuggingFaceClient:
     @classmethod
     async def verify_connectivity(cls) -> bool:
         """Verify connection to Hugging Face API"""
-        client = cls.get_client()
-        try:
-            # Simple chat completion to test the model (better for Instruct models)
-            messages = [{"role": "user", "content": "Ping"}]
-            await client.chat_completion(
-                messages=messages,
-                max_tokens=5
-            )
-            return True
-        except Exception as e:
-            print(f"Failed to connect to Hugging Face API: {e}")
-            raise e
+        async with cls.get_client() as client:
+            try:
+                # Simple chat completion to test the model (better for Instruct models)
+                messages = [{"role": "user", "content": "Ping"}]
+                await client.chat_completion(
+                    messages=messages,
+                    max_tokens=5
+                )
+                return True
+            except Exception as e:
+                print(f"Failed to connect to Hugging Face API: {e}")
+                raise e
 
     @classmethod
     async def generate(cls, prompt: str, system_prompt: str = None) -> str:
         """Helper to generate text from the LLM."""
-        client = cls.get_client()
-        messages = []
-        if system_prompt:
-            messages.append({"role": "system", "content": system_prompt})
+        async with cls.get_client() as client:
+            messages = []
+            if system_prompt:
+                messages.append({"role": "system", "content": system_prompt})
 
-        messages.append({"role": "user", "content": prompt})
+            messages.append({"role": "user", "content": prompt})
 
-        response = await client.chat_completion(
-            messages=messages,
-            max_tokens=2048,
-            temperature=0.7
-        )
-        return response.choices[0].message.content
+            response = await client.chat_completion(
+                messages=messages,
+                max_tokens=2048,
+                temperature=0.9
+            )
+            return response.choices[0].message.content
 
 async def get_llm_client() -> AsyncInferenceClient:
     return HuggingFaceClient.get_client()

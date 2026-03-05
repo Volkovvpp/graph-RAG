@@ -5,10 +5,14 @@ import os
 import sys
 from pathlib import Path
 
-# Add project root to sys.path
+# Add project root to sys.path BEFORE any local imports
 project_root = Path(__file__).resolve().parent.parent.parent
 if str(project_root) not in sys.path:
     sys.path.append(str(project_root))
+
+from src.connections.elastic import ElasticsearchClient
+from src.connections.neo4j import Neo4jClient
+# ...existing code...
 
 from src.ingestion.pipeline import IngestionPipeline
 from src.retrieval.hybrid import HybridRetriever
@@ -103,29 +107,51 @@ async def get_answer(user_query):
 # --- Event Handlers ---
 
 async def handle_ingestion():
-    if uploaded_files:
-        await run_ingestion(uploaded_files)
-    else:
-        st.sidebar.warning("Please upload files first.")
+    try:
+        if uploaded_files:
+            await run_ingestion(uploaded_files)
+        else:
+            st.sidebar.warning("Please upload files first.")
+    finally:
+        await ElasticsearchClient.close()
+        await Neo4jClient.close()
 
 async def handle_query():
-    if query:
-        answer, sources = await get_answer(query)
+    try:
+        if query:
+            answer, sources = await get_answer(query)
 
-        st.markdown("### Answer")
-        st.write(answer)
+            st.markdown("### Answer")
+            st.write(answer)
 
-        if sources:
-            with st.expander("View Sources"):
-                for src in sources:
-                    st.markdown(f"- **{src.get('chunk_id', 'Unknown')}**: {src.get('text', '')[:200]}...")
-    else:
-        st.warning("Please enter a question.")
+            if sources:
+                with st.expander("View Sources"):
+                    for src in sources:
+                        st.markdown(f"- **{src.get('chunk_id', 'Unknown')}**: {src.get('text', '')[:200]}...")
+        else:
+            st.warning("Please enter a question.")
+    finally:
+        await ElasticsearchClient.close()
+        await Neo4jClient.close()
+
+def run_async(coro):
+    """Run an async coroutine safely in Streamlit without closing the event loop."""
+    try:
+        loop = asyncio.get_event_loop()
+        if loop.is_closed():
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+    except RuntimeError:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+
+
+    return loop.run_until_complete(coro)
 
 if process_button:
-    asyncio.run(handle_ingestion())
+    run_async(handle_ingestion())
 
 if search_button:
-    asyncio.run(handle_query())
+    run_async(handle_query())
 
 # streamlit run D:\graph-RAG\src\ui\app.py
