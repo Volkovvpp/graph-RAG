@@ -28,6 +28,10 @@ class Settings(BaseSettings):
     CHUNK_SIZE: int = 512
     CHUNK_OVERLAP: int = 32
 
+    # Embeddings
+    EMBEDDING_MODEL_ID: str = "all-MiniLM-L6-v2"
+    EMBEDDING_DIM: int = 384
+
     @property
     def elastic_url(self) -> str:
         protocol = "https" if self.ES_USER and self.ES_PASSWORD else "http"
