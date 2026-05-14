@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: api
+  template:
+    metadata:
+      labels:
+        app: api
+    spec:
+      containers:
+      - name: api
+        image: graph-rag-api:latest  # Образ должен быть доступен в кластере или загружен в реестр
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 8000
+        env:
+        - name: ES_HOST
+          value: "elasticsearch"
+        - name: NEO4J_HOST
+          value: "neo4j-service"
+        - name: NEO4J_USER
+          valueFrom:
+            secretKeyRef:
+              name: graph-rag-secrets
+              key: NEO4J_USER
+        - name: NEO4J_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: graph-rag-secrets
+              key: NEO4J_PASSWORD
+        - name: HF_API_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: graph-rag-secrets
+              key: HF_TOKEN
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: api
+spec:
+  type: LoadBalancer # Для доступа извне кластера
+  selector:
+    app: api
+  ports:
+    - port: 8000
+      targetPort: 8000
+

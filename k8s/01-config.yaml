@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: graph-rag-secrets
+type: Opaque
+stringData:
+  NEO4J_USER: "neo4j"
+  NEO4J_PASSWORD: "password"
+  HF_TOKEN: "your_huggingface_token_here"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: graph-rag-config
+data:
+  ES_VERSION: "8.12.0"
+  ES_MEM_LIMIT: "1g"
+  NEO4J_VERSION: "5.15.0"
+  NEO4J_PLUGINS: '["apoc"]'

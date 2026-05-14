@@ -20,7 +20,7 @@ class Settings(BaseSettings):
     NEO4J_PASSWORD: str = "password"
 
     # Hugging Face
-    HF_API_TOKEN: str = ""
+    HF_TOKEN: str = ""
     HF_MODEL_ID: str = "meta-llama/Meta-Llama-3-8B-Instruct"
     HF_INFERENCE_ENDPOINT: str | None = None
 
