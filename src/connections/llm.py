@@ -7,9 +7,9 @@ class HuggingFaceClient:
         # We recreate the client for each call or loop to avoid "Timeout context manager should be used inside a task"
         # and other event loop mismatch issues in Streamlit/Windows environments.
         if settings.HF_INFERENCE_ENDPOINT:
-             return AsyncInferenceClient(model=settings.HF_INFERENCE_ENDPOINT, token=settings.HF_API_TOKEN)
+             return AsyncInferenceClient(model=settings.HF_INFERENCE_ENDPOINT, token=settings.HF_TOKEN)
         else:
-             return AsyncInferenceClient(model=settings.HF_MODEL_ID, token=settings.HF_API_TOKEN)
+             return AsyncInferenceClient(model=settings.HF_MODEL_ID, token=settings.HF_TOKEN)
 
     @classmethod
     async def verify_connectivity(cls) -> bool:
