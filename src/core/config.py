@@ -32,6 +32,11 @@ class Settings(BaseSettings):
     EMBEDDING_MODEL_ID: str = "all-MiniLM-L6-v2"
     EMBEDDING_DIM: int = 384
 
+    # Kafka
+    KAFKA_BOOTSTRAP_SERVERS = "localhost:9092"
+    REQUEST_TOPIC = "query_requests"
+    RESULT_TOPIC = "query_results"
+
     @property
     def elastic_url(self) -> str:
         protocol = "https" if self.ES_USER and self.ES_PASSWORD else "http"
