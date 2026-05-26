@@ -9,7 +9,14 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 
 from dotenv import load_dotenv
-from fastapi import FastAPI, UploadFile, File, HTTPException, WebSocket, WebSocketDisconnect
+from fastapi import (
+    FastAPI,
+    UploadFile,
+    File,
+    HTTPException,
+    WebSocket,
+    WebSocketDisconnect,
+)
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from aiokafka import AIOKafkaProducer, AIOKafkaConsumer
@@ -62,17 +69,20 @@ async def lifespan(app: FastAPI):
         await producer.stop()
 
 
-
 app = FastAPI(title="Graph RAG API", lifespan=lifespan)
+
 
 class QueryRequest(BaseModel):
     query: str
+
 
 class QueryResponse(BaseModel):
     answer: str
     sources: list
 
+
 UPLOAD_TOPIC = getattr(settings, "UPLOAD_TOPIC", "upload_requests")
+
 
 @app.post("/upload", status_code=202)
 async def upload_document(file: UploadFile = File(...)):
@@ -89,7 +99,7 @@ async def upload_document(file: UploadFile = File(...)):
             "task_id": task_id,
             "type": "upload",
             "file_path": str(file_path),
-            "filename": file.filename
+            "filename": file.filename,
         }
         await producer.send_and_wait(UPLOAD_TOPIC, json.dumps(msg).encode("utf-8"))
 
@@ -127,6 +137,7 @@ async def websocket_results(websocket: WebSocket, task_id: str):
     finally:
         results_queues.pop(task_id, None)
 
+
 @app.post("/query", response_model=QueryResponse)
 async def generate_answer(request: QueryRequest):
     """Эндпоинт для генерации ответа на вопрос."""
@@ -137,7 +148,9 @@ async def generate_answer(request: QueryRequest):
         retrieval_result = await retriever.retrieve(request.query)
         context = retrieval_result.get("context", "")
 
-        answer = await synthesizer.generate_response(query=request.query, context=context)
+        answer = await synthesizer.generate_response(
+            query=request.query, context=context
+        )
 
         return QueryResponse(
             answer=answer,

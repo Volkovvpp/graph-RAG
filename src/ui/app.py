@@ -9,14 +9,14 @@ project_root = Path(__file__).resolve().parent.parent.parent
 if str(project_root) not in sys.path:
     sys.path.append(str(project_root))
 
-from src.connections.elastic import ElasticsearchClient # noqa: E402
-from src.connections.neo4j import Neo4jClient # noqa: E402
+from src.connections.elastic import ElasticsearchClient  # noqa: E402
+from src.connections.neo4j import Neo4jClient  # noqa: E402
 # ...existing code...
 
-from src.ingestion.pipeline import IngestionPipeline # noqa: E402
-from src.retrieval.hybrid import HybridRetriever # noqa: E402
-from src.generation.synthesizer import Synthesizer # noqa: E402
-from src.core.logger import get_logger # noqa: E402
+from src.ingestion.pipeline import IngestionPipeline  # noqa: E402
+from src.retrieval.hybrid import HybridRetriever  # noqa: E402
+from src.generation.synthesizer import Synthesizer  # noqa: E402
+from src.core.logger import get_logger  # noqa: E402
 
 logger = get_logger("ui")
 

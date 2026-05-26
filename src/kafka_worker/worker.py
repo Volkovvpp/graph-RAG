@@ -18,6 +18,7 @@ REQUEST_TOPIC = settings.REQUEST_TOPIC
 RESULT_TOPIC = settings.RESULT_TOPIC
 UPLOAD_TOPIC = getattr(settings, "UPLOAD_TOPIC", "upload_requests")
 
+
 async def process_task(task_id: str, query: str, producer: AIOKafkaProducer):
     logger.info(f"Processing task {task_id}")
     try:
@@ -33,20 +34,19 @@ async def process_task(task_id: str, query: str, producer: AIOKafkaProducer):
             "task_id": task_id,
             "status": "completed",
             "answer": answer,
-            "sources": retrieval_result.get("sources", [])
+            "sources": retrieval_result.get("sources", []),
         }
     except Exception as e:
         logger.error(f"Error processing task {task_id}: {e}")
-        result_data = {
-            "task_id": task_id,
-            "status": "error",
-            "detail": str(e)
-        }
+        result_data = {"task_id": task_id, "status": "error", "detail": str(e)}
 
     await producer.send_and_wait(RESULT_TOPIC, json.dumps(result_data).encode("utf-8"))
     logger.info(f"Task {task_id} completed and result sent to Kafka.")
 
-async def process_upload_task(task_id: str, file_path_str: str, filename: str, producer: AIOKafkaProducer):
+
+async def process_upload_task(
+    task_id: str, file_path_str: str, filename: str, producer: AIOKafkaProducer
+):
     logger.info(f"Processing upload task {task_id} for file {filename}")
     try:
         pipeline = IngestionPipeline()
@@ -56,7 +56,7 @@ async def process_upload_task(task_id: str, file_path_str: str, filename: str, p
         result_data = {
             "task_id": task_id,
             "status": "completed",
-            "message": f"Файл '{filename}' успешно загружен и обработан."
+            "message": f"Файл '{filename}' успешно загружен и обработан.",
         }
 
         # Удаляем временный файл после обработки
@@ -65,14 +65,11 @@ async def process_upload_task(task_id: str, file_path_str: str, filename: str, p
 
     except Exception as e:
         logger.error(f"Error processing upload task {task_id}: {e}")
-        result_data = {
-            "task_id": task_id,
-            "status": "error",
-            "detail": str(e)
-        }
+        result_data = {"task_id": task_id, "status": "error", "detail": str(e)}
 
     await producer.send_and_wait(RESULT_TOPIC, json.dumps(result_data).encode("utf-8"))
     logger.info(f"Upload task {task_id} completed and result sent to Kafka.")
+
 
 async def consume():
     consumer = AIOKafkaConsumer(
@@ -80,7 +77,7 @@ async def consume():
         UPLOAD_TOPIC,
         bootstrap_servers=KAFKA_BOOTSTRAP_SERVERS,
         group_id="query_workers",
-        auto_offset_reset="earliest"
+        auto_offset_reset="earliest",
     )
     producer = AIOKafkaProducer(bootstrap_servers=KAFKA_BOOTSTRAP_SERVERS)
 
@@ -101,7 +98,9 @@ async def consume():
                 file_path = data.get("file_path")
                 filename = data.get("filename")
                 if file_path and filename:
-                    asyncio.create_task(process_upload_task(task_id, file_path, filename, producer))
+                    asyncio.create_task(
+                        process_upload_task(task_id, file_path, filename, producer)
+                    )
             else:
                 query = data.get("query")
                 if query:
@@ -109,6 +108,7 @@ async def consume():
     finally:
         await consumer.stop()
         await producer.stop()
+
 
 if __name__ == "__main__":
     asyncio.run(consume())
