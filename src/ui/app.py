@@ -1,7 +1,6 @@
 import streamlit as st
 import asyncio
 import tempfile
-import os
 import sys
 from pathlib import Path
 
@@ -10,14 +9,14 @@ project_root = Path(__file__).resolve().parent.parent.parent
 if str(project_root) not in sys.path:
     sys.path.append(str(project_root))
 
-from src.connections.elastic import ElasticsearchClient
-from src.connections.neo4j import Neo4jClient
+from src.connections.elastic import ElasticsearchClient # noqa: E402
+from src.connections.neo4j import Neo4jClient # noqa: E402
 # ...existing code...
 
-from src.ingestion.pipeline import IngestionPipeline
-from src.retrieval.hybrid import HybridRetriever
-from src.generation.synthesizer import Synthesizer
-from src.core.logger import get_logger
+from src.ingestion.pipeline import IngestionPipeline # noqa: E402
+from src.retrieval.hybrid import HybridRetriever # noqa: E402
+from src.generation.synthesizer import Synthesizer # noqa: E402
+from src.core.logger import get_logger # noqa: E402
 
 logger = get_logger("ui")
 
@@ -31,7 +30,7 @@ st.sidebar.header("📂 Document Ingestion")
 uploaded_files = st.sidebar.file_uploader(
     "Upload PDF, TXT, or MD files",
     type=["pdf", "txt", "md"],
-    accept_multiple_files=True
+    accept_multiple_files=True,
 )
 
 process_button = st.sidebar.button("Process Documents")
@@ -42,6 +41,7 @@ query = st.text_input("Enter your question here:")
 search_button = st.button("Search & Answer")
 
 # --- Helper Functions ---
+
 
 async def run_ingestion(files):
     pipeline = IngestionPipeline()
@@ -81,6 +81,7 @@ async def run_ingestion(files):
         # Close connections if needed (though usually kept open for query)
         pass
 
+
 async def get_answer(user_query):
     retriever = HybridRetriever()
     synthesizer = Synthesizer()
@@ -93,7 +94,10 @@ async def get_answer(user_query):
             sources = retrieval_result.get("sources", [])
 
             if not context:
-                return "I couldn't find any relevant information in the uploaded documents.", []
+                return (
+                    "I couldn't find any relevant information in the uploaded documents.",
+                    [],
+                )
 
             # 2. Generate Answer
             answer = await synthesizer.generate_response(user_query, context)
@@ -104,7 +108,9 @@ async def get_answer(user_query):
             logger.error(f"Query error: {e}")
             return f"An error occurred: {str(e)}", []
 
+
 # --- Event Handlers ---
+
 
 async def handle_ingestion():
     try:
@@ -115,6 +121,7 @@ async def handle_ingestion():
     finally:
         await ElasticsearchClient.close()
         await Neo4jClient.close()
+
 
 async def handle_query():
     try:
@@ -127,12 +134,15 @@ async def handle_query():
             if sources:
                 with st.expander("View Sources"):
                     for src in sources:
-                        st.markdown(f"- **{src.get('chunk_id', 'Unknown')}**: {src.get('text', '')[:200]}...")
+                        st.markdown(
+                            f"- **{src.get('chunk_id', 'Unknown')}**: {src.get('text', '')[:200]}..."
+                        )
         else:
             st.warning("Please enter a question.")
     finally:
         await ElasticsearchClient.close()
         await Neo4jClient.close()
+
 
 def run_async(coro):
     """Run an async coroutine safely in Streamlit without closing the event loop."""
@@ -145,8 +155,8 @@ def run_async(coro):
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
 
-
     return loop.run_until_complete(coro)
+
 
 if process_button:
     run_async(handle_ingestion())

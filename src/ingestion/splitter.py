@@ -3,6 +3,7 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_core.documents import Document
 from src.core.config import settings
 
+
 class TextSplitter:
     """Helper class to split text into chunks."""
 
@@ -36,4 +37,3 @@ class TextSplitter:
             A list of string chunks.
         """
         return TextSplitter._splitter.split_text(text)
-

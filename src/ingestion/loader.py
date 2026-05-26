@@ -3,6 +3,7 @@ from pathlib import Path
 from langchain_community.document_loaders import PyPDFLoader, TextLoader
 from langchain_core.documents import Document
 
+
 class DocumentLoader:
     """Helper class to load documents of different types."""
 
@@ -32,7 +33,10 @@ class DocumentLoader:
         return loader.load()
 
     @staticmethod
-    def load_directory(directory_path: Union[str, Path], extensions: List[str] = [".pdf", ".txt", ".md"]) -> List[Document]:
+    def load_directory(
+        directory_path: Union[str, Path],
+        extensions: List[str] = [".pdf", ".txt", ".md"],
+    ) -> List[Document]:
         """Load all supported documents from a directory.
 
         Args:
@@ -55,4 +59,3 @@ class DocumentLoader:
                     print(f"Error loading {file}: {e}")
 
         return documents
-

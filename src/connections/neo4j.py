@@ -1,6 +1,7 @@
 from neo4j import AsyncGraphDatabase, AsyncDriver, Query
 from src.core.config import settings
 
+
 class Neo4jClient:
     _driver: AsyncDriver | None = None
 
@@ -16,7 +17,9 @@ class Neo4jClient:
         return cls._driver
 
     @classmethod
-    async def save_chunk_graph(cls, chunk_id: str, chunk_text: str, graph_data: dict, source: str = "unknown"):
+    async def save_chunk_graph(
+        cls, chunk_id: str, chunk_text: str, graph_data: dict, source: str = "unknown"
+    ):
         """
         Save a chunk and its extracted graph data into Neo4j.
         Links Chunk -> Entity and Entity -> Entity.
@@ -53,7 +56,7 @@ class Neo4jClient:
                     text=chunk_text,
                     source=source,
                     entities=graph_data.get("entities", []),
-                    relationships=graph_data.get("relationships", [])
+                    relationships=graph_data.get("relationships", []),
                 )
         except Exception as e:
             print(f"Failed to save graph data for chunk {chunk_id}: {e}")
@@ -85,6 +88,6 @@ class Neo4jClient:
             print(f"Failed to connect to Neo4j: {e}")
             raise e
 
+
 async def get_neo4j_driver() -> AsyncDriver:
     return Neo4jClient.get_driver()
-

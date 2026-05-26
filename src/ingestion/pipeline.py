@@ -12,6 +12,7 @@ from src.connections.embedder import EmbeddingClient
 
 logger = get_logger(__name__)
 
+
 class IngestionPipeline:
     """
     Orchestrates the ingestion process:
@@ -52,9 +53,11 @@ class IngestionPipeline:
         try:
             batch_size = 5
             for i in range(0, len(chunks), batch_size):
-                batch = chunks[i:i + batch_size]
+                batch = chunks[i : i + batch_size]
                 await self._process_batch(batch)
-                logger.info(f"Processed batch {i // batch_size + 1}/{(len(chunks) + batch_size - 1) // batch_size}")
+                logger.info(
+                    f"Processed batch {i // batch_size + 1}/{(len(chunks) + batch_size - 1) // batch_size}"
+                )
         finally:
             await ElasticsearchClient.close()
 
@@ -76,8 +79,7 @@ class IngestionPipeline:
             # Extraction
             source = chunk.metadata.get("source", "unknown")
             extraction_result = await self.extractor.extract(
-                chunk_text=chunk.page_content,
-                chunk_metadata=chunk.metadata
+                chunk_text=chunk.page_content, chunk_metadata=chunk.metadata
             )
             chunk_id = extraction_result["chunk_id"]
             graph_data = extraction_result["graph_data"]
@@ -91,7 +93,7 @@ class IngestionPipeline:
                 chunk_id=chunk_id,
                 text=chunk.page_content,
                 metadata=chunk.metadata,
-                embedding=embedding
+                embedding=embedding,
             )
             logger.debug(f"Indexed chunk {chunk_id} in Elasticsearch.")
 
@@ -100,7 +102,7 @@ class IngestionPipeline:
                 chunk_id=chunk_id,
                 chunk_text=chunk.page_content,
                 graph_data=graph_data,
-                source=source
+                source=source,
             )
             logger.debug(f"Saved graph for chunk {chunk_id} in Neo4j.")
 
@@ -112,8 +114,12 @@ class IngestionPipeline:
                 # await Neo4jClient.delete_chunk_graph(chunk_id)
                 logger.warning(f"Rolled back changes for chunk {chunk_id}.")
 
-            logger.error(f"Error processing chunk {chunk_id if chunk_id else 'unknown'}: {e}. Rolling back...")
+            logger.error(
+                f"Error processing chunk {chunk_id if chunk_id else 'unknown'}: {e}. Rolling back..."
+            )
             if chunk_id:
-                logger.info(f"Rolling back Elasticsearch document for chunk {chunk_id}.")
+                logger.info(
+                    f"Rolling back Elasticsearch document for chunk {chunk_id}."
+                )
                 await ElasticsearchClient.delete_document(self.es_client, chunk_id)
             raise

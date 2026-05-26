@@ -1,4 +1,4 @@
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any
 
 from neo4j import Query
 
@@ -7,13 +7,16 @@ from src.core.logger import get_logger
 
 logger = get_logger(__name__)
 
+
 class GraphRetriever:
     """
     Handles graph traversal in Neo4j to find connected context based on initial chunks.
     """
 
     @staticmethod
-    async def get_connected_chunks(chunk_ids: List[str], hops: int = 1) -> List[Dict[str, Any]]:
+    async def get_connected_chunks(
+        chunk_ids: List[str], hops: int = 1
+    ) -> List[Dict[str, Any]]:
         """
         Finds chunks that are semantically related to the input chunks by traversing the knowledge graph.
 
@@ -53,13 +56,17 @@ class GraphRetriever:
                 result = await session.run(query, chunk_ids=chunk_ids)
 
                 async for record in result:
-                    results.append({
-                        "chunk_id": record["chunk_id"],
-                        "text": record["text"],
-                        "reasoning": f"Connected via {record['entity_type']}: {record['shared_entity']}"
-                    })
+                    results.append(
+                        {
+                            "chunk_id": record["chunk_id"],
+                            "text": record["text"],
+                            "reasoning": f"Connected via {record['entity_type']}: {record['shared_entity']}",
+                        }
+                    )
 
-            logger.info(f"Graph traversal found {len(results)} connected chunks for {len(chunk_ids)} input chunks.")
+            logger.info(
+                f"Graph traversal found {len(results)} connected chunks for {len(chunk_ids)} input chunks."
+            )
             return results
 
         except Exception as e:
@@ -96,4 +103,3 @@ class GraphRetriever:
         except Exception as e:
             logger.error(f"Entity context retrieval failed: {e}")
             return []
-

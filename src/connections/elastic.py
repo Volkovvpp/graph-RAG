@@ -4,6 +4,7 @@ from src.core.logger import get_logger
 
 logger = get_logger(__name__)
 
+
 class ElasticsearchClient:
     _instance: AsyncElasticsearch | None = None
 
@@ -36,19 +37,28 @@ class ElasticsearchClient:
                     "metadata": {"type": "object"},
                     "embedding": {
                         "type": "dense_vector",
-                        "dims": settings.EMBEDDING_DIM
-                    }
+                        "dims": settings.EMBEDDING_DIM,
+                    },
                 }
             }
             try:
                 await client.indices.create(index=index_name, mappings=mapping)
-                logger.info(f"Created index: {index_name} with embedding dimension {settings.EMBEDDING_DIM}")
+                logger.info(
+                    f"Created index: {index_name} with embedding dimension {settings.EMBEDDING_DIM}"
+                )
             except Exception as e:
                 if "resource_already_exists_exception" not in str(e):
                     raise
 
     @classmethod
-    async def index_document(cls, client: AsyncElasticsearch, chunk_id: str, text: str, metadata: dict, embedding: list[float]):
+    async def index_document(
+        cls,
+        client: AsyncElasticsearch,
+        chunk_id: str,
+        text: str,
+        metadata: dict,
+        embedding: list[float],
+    ):
         """Index a single document/chunk with its embedding."""
         index_name = settings.ES_INDEX_kNOWLEDGE_BASE
 
@@ -76,6 +86,7 @@ class ElasticsearchClient:
         if cls._instance:
             await cls._instance.close()
             cls._instance = None
+
 
 async def get_es_client() -> AsyncElasticsearch:
     return ElasticsearchClient.get_client()

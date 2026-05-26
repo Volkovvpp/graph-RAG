@@ -6,6 +6,7 @@ from src.connections.embedder import EmbeddingClient
 
 logger = get_logger(__name__)
 
+
 class FullTextRetriever:
     """
     Handles full-text and vector search in Elasticsearch to find entry points for the graph traversal.
@@ -31,12 +32,8 @@ class FullTextRetriever:
         # Standard BM25 query
         body = {
             "size": top_k,
-            "query": {
-                "match": {
-                    "text": query
-                }
-            },
-            "_source": ["chunk_id", "text", "metadata"]
+            "query": {"match": {"text": query}},
+            "_source": ["chunk_id", "text", "metadata"],
         }
 
         try:
@@ -45,12 +42,14 @@ class FullTextRetriever:
 
             results = []
             for hit in hits:
-                results.append({
-                    "chunk_id": hit["_source"]["chunk_id"],
-                    "text": hit["_source"]["text"],
-                    "metadata": hit["_source"].get("metadata", {}),
-                    "score": hit["_score"]
-                })
+                results.append(
+                    {
+                        "chunk_id": hit["_source"]["chunk_id"],
+                        "text": hit["_source"]["text"],
+                        "metadata": hit["_source"].get("metadata", {}),
+                        "score": hit["_score"],
+                    }
+                )
 
             return results
 
@@ -76,29 +75,30 @@ class FullTextRetriever:
             "field": "embedding",
             "query_vector": query_embedding,
             "k": top_k,
-            "num_candidates": 100  # Number of candidates to consider
+            "num_candidates": 100,  # Number of candidates to consider
         }
 
         try:
             response = await client.search(
                 index=self.index,
                 knn=knn_query,
-                _source=["chunk_id", "text", "metadata"]
+                _source=["chunk_id", "text", "metadata"],
             )
             hits = response["hits"]["hits"]
 
             results = []
             for hit in hits:
-                results.append({
-                    "chunk_id": hit["_source"]["chunk_id"],
-                    "text": hit["_source"]["text"],
-                    "metadata": hit["_source"].get("metadata", {}),
-                    "score": hit["_score"]
-                })
+                results.append(
+                    {
+                        "chunk_id": hit["_source"]["chunk_id"],
+                        "text": hit["_source"]["text"],
+                        "metadata": hit["_source"].get("metadata", {}),
+                        "score": hit["_score"],
+                    }
+                )
 
             return results
 
         except Exception as e:
             logger.error(f"Elasticsearch vector search failed: {e}")
             return []
-
