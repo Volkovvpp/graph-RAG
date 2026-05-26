@@ -41,7 +41,7 @@ class GraphExtractor:
         return get_prompt("extraction").format(text=text)
 
     async def extract(
-        self, chunk_text: str, chunk_metadata: Dict[str, Any] = None
+        self, chunk_text: str, chunk_metadata: Dict[str, Any] | None = None
     ) -> Dict[str, Any]:
         """
         Processes a single chunk of text and returns specific graph data

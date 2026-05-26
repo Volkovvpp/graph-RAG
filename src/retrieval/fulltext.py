@@ -82,10 +82,10 @@ class FullTextRetriever:
             response = await client.search(
                 index=self.index,
                 knn=knn_query,
-                _source=["chunk_id", "text", "metadata"],
+                source_includes=["chunk_id", "text", "metadata"],
             )
-            hits = response["hits"]["hits"]
 
+            hits = response["hits"]["hits"]
             results = []
             for hit in hits:
                 results.append(

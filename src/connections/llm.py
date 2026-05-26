@@ -30,7 +30,7 @@ class HuggingFaceClient:
                 raise e
 
     @classmethod
-    async def generate(cls, prompt: str, system_prompt: str = None) -> str:
+    async def generate(cls, prompt: str, system_prompt: str | None = None) -> str:
         """Helper to generate text from the LLM."""
         async with cls.get_client() as client:
             messages = []

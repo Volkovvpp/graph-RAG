@@ -20,14 +20,15 @@ class QueryResponse(BaseModel):
     sources: list
 
 
-@app.post("/upload")
+@app.post("/upload", status_code=202)
 async def upload_document(file: UploadFile = File(...)):
-    """
-    Эндпоинт для загрузки файла.
-    """
+    """Эндпоинт для асинхронной загрузки и обработки файла."""
     try:
         temp_dir = Path(tempfile.mkdtemp())
-        file_path = temp_dir / file.filename
+
+        # fix: assure file.filename is valid string
+        filename = file.filename or "unknown_file"
+        file_path = temp_dir / filename
 
         with file_path.open("wb") as buffer:
             shutil.copyfileobj(file.file, buffer)

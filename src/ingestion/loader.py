@@ -23,6 +23,7 @@ class DocumentLoader:
 
         extension = path.suffix.lower()
 
+        loader: Union[PyPDFLoader, TextLoader]
         if extension == ".pdf":
             loader = PyPDFLoader(str(path))
         elif extension in [".txt", ".md"]:
