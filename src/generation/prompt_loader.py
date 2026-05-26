@@ -1,5 +1,6 @@
 from pathlib import Path
 
+
 def get_prompt(prompt_file_name: str) -> str:
     """
     Load a prompt template from the prompts directory.

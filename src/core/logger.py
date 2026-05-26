@@ -1,6 +1,7 @@
 import logging
 import sys
 
+
 def get_logger(name: str) -> logging.Logger:
     logger = logging.getLogger(name)
 
@@ -15,4 +16,3 @@ def get_logger(name: str) -> logging.Logger:
         logger.addHandler(console_handler)
 
     return logger
-

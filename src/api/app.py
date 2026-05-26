@@ -10,12 +10,15 @@ from src.generation.synthesizer import Synthesizer
 
 app = FastAPI(title="Graph RAG API")
 
+
 class QueryRequest(BaseModel):
     query: str
+
 
 class QueryResponse(BaseModel):
     answer: str
     sources: list
+
 
 @app.post("/upload")
 async def upload_document(file: UploadFile = File(...)):
@@ -36,6 +39,7 @@ async def upload_document(file: UploadFile = File(...)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+
 @app.post("/query", response_model=QueryResponse)
 async def generate_answer(request: QueryRequest):
     """
@@ -50,12 +54,10 @@ async def generate_answer(request: QueryRequest):
         context = retrieval_result.get("context", "")
 
         # Генерация ответа
-        answer = await synthesizer.generate_response(query=request.query, context=context)
-
-        return QueryResponse(
-            answer=answer,
-            sources=retrieval_result.get("sources", [])
+        answer = await synthesizer.generate_response(
+            query=request.query, context=context
         )
+
+        return QueryResponse(answer=answer, sources=retrieval_result.get("sources", []))
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-

@@ -1,7 +1,10 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
+    model_config = SettingsConfigDict(
+        env_file=".env", env_file_encoding="utf-8", extra="ignore"
+    )
 
     # Project
     PROJECT_NAME: str = "graph-rag"
@@ -41,5 +44,5 @@ class Settings(BaseSettings):
     def neo4j_uri(self) -> str:
         return f"bolt://{self.NEO4J_HOST}:{self.NEO4J_BOLT_PORT}"
 
-settings = Settings()
 
+settings = Settings()

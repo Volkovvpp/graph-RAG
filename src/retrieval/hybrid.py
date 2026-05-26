@@ -1,10 +1,11 @@
-from typing import List, Dict, Any, Set
+from typing import Dict, Any
 import asyncio
 from src.retrieval.fulltext import FullTextRetriever
 from src.retrieval.graph import GraphRetriever
 from src.core.logger import get_logger
 
 logger = get_logger(__name__)
+
 
 class HybridRetriever:
     """
@@ -45,7 +46,9 @@ class HybridRetriever:
         graph_chunks_task = self.graph.get_connected_chunks(seed_chunk_ids, hops=1)
         entity_context_task = self.graph.get_entity_context(seed_chunk_ids)
 
-        graph_chunks, entity_context = await asyncio.gather(graph_chunks_task, entity_context_task)
+        graph_chunks, entity_context = await asyncio.gather(
+            graph_chunks_task, entity_context_task
+        )
 
         # 3. Combine & Deduplicate Results
         # Use a dictionary to handle duplicates by chunk_id
@@ -61,7 +64,9 @@ class HybridRetriever:
             if g_res["chunk_id"] not in final_chunks:
                 final_chunks[g_res["chunk_id"]] = g_res["text"]
 
-        logger.info(f"Retrieved {len(final_chunks)} unique chunks ({len(es_results)} from ES, {len(graph_chunks)} from Graph).")
+        logger.info(
+            f"Retrieved {len(final_chunks)} unique chunks ({len(es_results)} from ES, {len(graph_chunks)} from Graph)."
+        )
 
         # 4. Construct Context String for LLM
         context_parts = []
@@ -70,7 +75,7 @@ class HybridRetriever:
         if entity_context:
             context_parts.append("--- KNOWLEDGE GRAPH ENTITIES ---")
             context_parts.extend(entity_context)
-            context_parts.append("") # Blank line
+            context_parts.append("")  # Blank line
 
         # Add Document Chunks
         context_parts.append("--- RELEVANT DOCUMENT EXCERPTS ---")
@@ -82,6 +87,5 @@ class HybridRetriever:
         return {
             "context": full_context,
             "chunk_ids": list(final_chunks.keys()),
-            "sources": es_results + graph_chunks # Raw data for citations if needed
+            "sources": es_results + graph_chunks,  # Raw data for citations if needed
         }
-
